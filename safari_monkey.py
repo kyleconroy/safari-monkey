@@ -15,7 +15,7 @@ import os
 
 # Check for the correct number of command line arguments
 if len(sys.argv) is not 2:
-    print("Usage: ustoextz http://userscripts.org/scripts/show/NNNNN")
+    print("Usage: ./safari_monkey.py http://userscripts.org/scripts/show/NNNNN")
     sys.exit(1)
 
 # Get the user script url
