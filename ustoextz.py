@@ -7,10 +7,11 @@ import sys
 import logging
 import urllib2
 import re
-from xml.dom.minidom import Document
+import plistlib
+import os
 
 # Set logging level
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 # Check for the correct number of command line arguments
 if len(sys.argv) is not 2:
@@ -28,6 +29,17 @@ if not match:
     sys.exit(1)
 
 script_id = match.group(0)
+
+# Create a bundle identifer from the script name
+bundle = "org.userscripts.script%s" % script_id
+
+# Create the filename
+filename = "script%s.js" % script_id
+
+# Create the directory name
+directory = "script%s.safariextension" % script_id
+
+# Create the script url
 script_url = "http://userscripts.org/scripts/source/%s.user.js" % script_id
 
 # Pull the script from userscripts.org
@@ -61,7 +73,7 @@ def extract_list(param, required=True):
 
 # Extract name, description of extension
 name = extract("@name")
-desc = extract("@description")
+desc = extract("@description")[:99]
 white_list = extract_list("@include")
 
 # DEBUG FOR NOW
@@ -69,107 +81,51 @@ logging.debug(name)
 logging.debug(desc)
 logging.debug(white_list)
 
-# Create a bundle identifer from the script name
-bundle = "org.userscripts.%s" % script_id
-
-# Create the filename
-filename = "script_%s.js" % script_id
 
 logging.debug(bundle)
 
-# First, some helpers to make this suck a little less
-def node(tag, value):
-    element = info.createElement(tag)
-    text = info.createTextNode(value)
-    element.appendChild(text)
-    return element
+# Create the plist dictionary
+pl = {
+    "CFBundleDisplayName": name,
+    "CFBundleIdentifier": bundle,
+    "Author": "ustoextz Python Script",
+    "Description": desc,
+    "Website": script_url,
+    "CFBundleInfoDictionaryVersion": "6.0",
+    "ExtensionInfoDictionaryVersion": "1.0",
+    "CFBundleShortVersionString": "1.0",
+    "CFBundleVersion": "1",
+    "Chrome": {},
+    "Permissions": {
+        "Website Access": { "Level": "All" },
+        },
+    "Content": {
+        "Scripts": { "End": [filename] },
+        "Whitelist": white_list,
+        },
+    }
 
-# Let's start 
-doctype = '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+# Get paths
+path = os.path.abspath(os.path.dirname(__file__))
+directory = os.path.join(path, directory)
+infodest = os.path.join(directory, "Info.plist")
+filedest = os.path.join(directory, filename)
 
-info = Document()
 
-plist = info.createElement("plist")
-plist.setAttribute("version", "1.0")
+# Create the extension directory
+try:
+    os.mkdir(directory)
+except:
+    logging.info("Cannot make the extension directory, assuming it exists")
 
-d = info.createElement("dict")
+# Create the info plist
+plistlib.writePlist(pl, infodest)
 
-# Add the name of the script
-d.appendChild(node("key", "CFBundleDisplayName"))
-d.appendChild(node("string", name))
+# Create the user script
+f = open(filedest, 'w')
+f.write(script)
+f.close()
 
-# Add the author of the script
-d.appendChild(node("key", "Author"))
-d.appendChild(node("string", "ustoextz Python Script"))
-
-# Add the desciption of the script
-d.appendChild(node("key", "Description"))
-d.appendChild(node("string", desc))
-
-# Add the website of the script
-d.appendChild(node("key", "Website"))
-d.appendChild(node("string", script_url))
-
-# This is a default value the extension needs
-d.appendChild(node("key", "CFBundleInfoDictionaryVersion"))
-d.appendChild(node("string", "6.0"))
-d.appendChild(node("key", "ExtensionInfoDictionaryVersion"))
-d.appendChild(node("string", "1.0"))
-
-# Add the script version
-d.appendChild(node("key", "CFBundleShortVersionString"))
-d.appendChild(node("string", "1.0"))
-d.appendChild(node("key", "CFBundleVersion"))
-d.appendChild(node("string", "1"))
-
-# I really don't know what this setting does
-d.appendChild(node("key", "Chrome"))
-d.appendChild(info.createElement("dict"))
-
-# Create the permissions dictionary
-l = info.createElement('dict')
-l.appendChild(node("key", "Level"))
-l.appendChild(node("string", "All"))
-
-p = info.createElement('dict')
-p.appendChild(node("key", "Website Access"))
-p.appendChild(l)
-
-d.appendChild(node("key", "Permissions"))
-d.appendChild(p)
-
-# Create the Content node
-d.appendChild(node("key", "Content"))
-content_dict = info.createElement("dict")
-
-# Create the scripts section
-scripts_array = info.createElement("array")
-scripts_array.appendChild(node("string", filename))
-
-scripts_dict = info.createElement("dict")
-scripts_dict.appendChild(node("key", "End"))
-scripts_dict.appendChild(scripts_array)
-
-content_dict.appendChild(node("key", "Scripts"))
-content_dict.appendChild(scripts_dict)
-
-# Create the whitelist section
-white_array = info.createElement("array")
-
-for w in white_list:
-    white_array.appendChild(node("string", w))
-
-content_dict.appendChild(node("key", "Whitelist"))
-content_dict.appendChild(white_array)
-
-d.appendChild(content_dict)
-
-# Append the final nodes to the document
-plist.appendChild(d)
-info.appendChild(plist)
-
-# Thank god, the XML is over
-print info.toxml()
 
 
 
