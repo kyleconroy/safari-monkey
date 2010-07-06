@@ -6,7 +6,7 @@ For the first time, Safari Monkey let's you unleash this power in Cuptertino's b
 
 ## Creating Extensions
 
-First, you will need to sign up for a Safari developer account and obtain a valid certificate. Start the process [here][1]. If anyone has a suggestion on how to make this process quicker, I would love to talk. 
+First, you will need to sign up for a Safari developer account and obtain a valid certificate. Start the process [here][1]. If anyone has a suggestion on how to make this process quicker, please send me a message.
 
 [1]: http://theappleblog.com/2010/06/11/how-to-build-a-safari-extension/
 
