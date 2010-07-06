@@ -10,7 +10,7 @@ First, you will need to sign up for a Safari developer account and obtain a vali
 
 [1]: http://theappleblog.com/2010/06/11/how-to-build-a-safari-extension/
 
-Next, find a script at <userscripts.org> and copy the url (or code ID number).
+Next, find a script at <http://www.userscripts.org> and copy the url (or code ID number).
 
 Next, run 
 
